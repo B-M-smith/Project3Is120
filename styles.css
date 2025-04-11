@@ -1,3 +1,30 @@
+
+header {
+	width: 100%;
+	background-color: #DB5461;
+	color: white;
+	text-align: center;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	padding: 1.5rem 2rem;
+	margin-bottom: 2rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+header a {
+  color: white;
+  text-decoration: none;
+  transition: 0.3s all ease;
+  position: relative;
+}
+
 .container{ 
-    
+        width: 100vw;
+        background-color: #3891A6;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: center;
+        align-items: center;
 }
