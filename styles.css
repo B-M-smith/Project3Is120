@@ -5,7 +5,7 @@
   font-style: normal;
 }
 header {
-	width: 100%;
+	width: 100vw;
 	background-color: #DB5461;
 	color: white;
 	text-align: center;
@@ -15,6 +15,9 @@ header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 header a {
@@ -25,11 +28,38 @@ header a {
 }
 
 .container{ 
-        width: 100vw;
-        background-color: #3891A6;
-        border-radius: 8px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-        display: flex;
-        justify-content: center;
-        align-items: center;
+  width: 100vw;
+  background-color: #3891A6;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#map{
+  height: 750px; 
+  width: 75%;
+   margin: 20px;
+}
+.info { 
+  margin-top: 20px; 
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.random-flight-title{
+  font-family: "Poppins", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #4C5b5C;
+}
+#trackRandomFlight-btn{
+  color: #4C5b5C;
+  background-color: #DB5461;
+  box-shadow: #E3655B .5px ;
+  border-radius: .25rem;
+  margin: 5px;
+
 }

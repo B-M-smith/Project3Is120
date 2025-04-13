@@ -13,12 +13,7 @@
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 500px; width: 100%; margin-top: 20px; }
-    .info { margin-top: 20px; font-family: sans-serif; }
-  </style>
 </head>
-
 <body>
   <header class="header">
     <nav>
@@ -30,61 +25,70 @@
   </header>
 
   <main class="container">
-    <h2>Track Your Flight</h2>
-    <input id="flightInput" type="text" placeholder="Enter Flight Number">
-    <button onclick="trackFlight()">Track</button>
-
+    <h2 class="random">Random Flight Generator</h2>
+    <button id="trackRandomFlight-btn" onclick="trackRandomFlight()">Show Me a Flight</button>
+  
     <div id="map"></div>
     <div class="info" id="flightInfo"></div>
   </main>
+  
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <!-- Flight Tracker Script -->
   <script>
-    let map = L.map("map").setView([39.8283, -98.5795], 4); // center USA
 
+    let map = L.map("map").setView([39.8283, -98.5795], 4);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 18,
+        maxZoom: 18,
     }).addTo(map);
 
     let planeMarker;
+    let interval;
 
-    function trackFlight() {
-      const flightId = document.getElementById("flightInput").value;
-
-      async function fetchFlightData() {
+    async function trackRandomFlight() {
         try {
-          const res = await fetch(`https://flights.is120.ckearl.com/flight/${flightId}`);
-          const data = await res.json();
+        const res = await fetch("https://flights.is120.ckearl.com/flights");
+        const flights = await res.json();
 
-          const lat = data.latitude;
-          const lon = data.longitude;
+        const randomFlight = flights[Math.floor(Math.random() * flights.length)];
+        const flightId = randomFlight.id;
 
-          if (!planeMarker) {
+        if (interval) clearInterval(interval); // stop previous flight updates
+
+        const updateFlight = async () => {
+            const res = await fetch(`https://flights.is120.ckearl.com/flight/${flightId}`);
+            const data = await res.json();
+
+            const lat = data.latitude;
+            const lon = data.longitude;
+
+            if (!planeMarker) {
             planeMarker = L.marker([lat, lon]).addTo(map);
-          } else {
+            } else {
             planeMarker.setLatLng([lat, lon]);
-          }
+            }
 
-          map.setView([lat, lon], 6);
+            map.setView([lat, lon], 6);
 
-          document.getElementById("flightInfo").innerHTML = `
+            document.getElementById("flightInfo").innerHTML = `
             <strong>${data.flightNumber}</strong><br>
             From: ${data.origin} → To: ${data.destination}<br>
             Altitude: ${data.altitude} ft<br>
             Speed: ${data.speed} knots<br>
             ETA: ${data.estimatedArrival}
-          `;
-        } catch (err) {
-          alert("Flight not found. Please check the ID.");
-        }
-      }
+            `;
+        };
 
-      fetchFlightData();
-      setInterval(fetchFlightData, 15000); 
+        updateFlight();
+        interval = setInterval(updateFlight, 15000); // refresh every 15 sec
+
+        } catch (err) {
+        alert("Could not load flight data. Check your API or network.");
+        console.error(err);
+        }
     }
-  </script>
+</script>
 </body>
 </html>

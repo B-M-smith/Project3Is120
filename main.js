@@ -1,12 +1,9 @@
 // setup
 
 
-fetch("https://flights.is120.ckearl.com")
-	.then((response) => response.json())
-	.then((dataObject) => {
-		completeSteps(dataObject['data']);
-	});
-
+fetch("https://flights.is120.ckearl.com/flights")
+  .then(res => res.json())
+  .then(data => console.log("✅ API connected:", data));
 
 
 // Flight Tracker page 
