@@ -3,9 +3,12 @@
 
 fetch("https://flights.is120.ckearl.com/flights")
   .then(res => res.json())
-  .then(data => console.log("✅ API connected:", data));
+  .then(data => console.log(" API connected:", data));
 
-
+  // fetch("./API.json")
+  // .then(res => res.json())
+  // .then(data => console.log("Local API loaded:", data))
+  // .catch(err => console.error("Failed to load local API:", err));
 // Flight Tracker page 
 
 
@@ -27,7 +30,7 @@ const FlightTracker = ({ flightId }) => {
   useEffect(() => {
     const fetchFlightData = async () => {
       try {
-        const res = await fetch(`https://flights.is120.ckearl.com/flight/${flightId}`);
+        const res = await fetch(`./${flightId}`);
         const data = await res.json();
         setPosition([data.latitude, data.longitude]);
         setFlightInfo(data);

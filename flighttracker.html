@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="home" href="./index.html">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&family=Rubik:ital,wght@0,539;1,539&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="home" href="./index.html" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+    rel="stylesheet"
+  />
   <title>Flight Tracker</title>
 
   <!-- Leaflet CSS -->
@@ -16,79 +19,85 @@
 </head>
 <body>
   <header class="header">
-    <nav>
-      <h1>Flights</h1>
-      <a href="https://flights.is120.ckearl.com" target="_blank"></a>
-      <a href="./index.html">Home</a>
-      <a href="./flighttracker.html">Flight Tracker</a>
+    <nav class="nav-bar">
+      <div class="nav-left">
+        <a class="Pages" href="./index.html">Home</a>
+        <a class="Pages" href="./flighttracker.html">Flight Tracker</a>
+      </div>
+      <h1 class="nav-title">Flight Tracker</h1>
+      <div class="nav-right"></div>
     </nav>
   </header>
 
   <main class="container">
-    <h2 class="random">Random Flight Generator</h2>
+    <h2 class="random-flight-title">Random Flight Generator</h2>
     <button id="trackRandomFlight-btn" onclick="trackRandomFlight()">Show Me a Flight</button>
   
     <div id="map"></div>
     <div class="info" id="flightInfo"></div>
   </main>
-  
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <!-- Flight Tracker Script -->
   <script>
-
     let map = L.map("map").setView([39.8283, -98.5795], 4);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 18,
+      maxZoom: 18,
     }).addTo(map);
 
     let planeMarker;
     let interval;
 
     async function trackRandomFlight() {
-        try {
-        const res = await fetch("https://flights.is120.ckearl.com/flights");
+      try {
+        const res = await fetch("./API.json");
         const flights = await res.json();
 
         const randomFlight = flights[Math.floor(Math.random() * flights.length)];
         const flightId = randomFlight.id;
 
-        if (interval) clearInterval(interval); // stop previous flight updates
+        if (interval) clearInterval(interval);
 
         const updateFlight = async () => {
-            const res = await fetch(`https://flights.is120.ckearl.com/flight/${flightId}`);
-            const data = await res.json();
+          const localFlight = flights.find(f => f.id === flightId);
+          if (!localFlight) {
+            alert("Flight data not found in local file.");
+            return;
+          }
 
-            const lat = data.latitude;
-            const lon = data.longitude;
+          const lat = localFlight.latitude;
+          const lon = localFlight.longitude;
 
-            if (!planeMarker) {
-            planeMarker = L.marker([lat, lon]).addTo(map);
-            } else {
-            planeMarker.setLatLng([lat, lon]);
-            }
+          if (!lat || !lon) {
+            alert("No valid location data for this flight.");
+            return;
+          }
 
-            map.setView([lat, lon], 6);
+          if (planeMarker) {
+            map.removeLayer(planeMarker);
+          }
 
-            document.getElementById("flightInfo").innerHTML = `
-            <strong>${data.flightNumber}</strong><br>
-            From: ${data.origin} → To: ${data.destination}<br>
-            Altitude: ${data.altitude} ft<br>
-            Speed: ${data.speed} knots<br>
-            ETA: ${data.estimatedArrival}
-            `;
+          planeMarker = L.marker([lat, lon]).addTo(map);
+          map.setView([lat, lon], 6);
+
+          document.getElementById("flightInfo").innerHTML = `
+            <strong>${localFlight.flightNumber}</strong><br>
+            From: ${localFlight.origin} → To: ${localFlight.destination}<br>
+            Altitude: ${localFlight.altitude} ft<br>
+            Speed: ${localFlight.speed} knots<br>
+            ETA: ${localFlight.estimatedArrival}
+          `;
         };
 
         updateFlight();
-        interval = setInterval(updateFlight, 15000); // refresh every 15 sec
-
-        } catch (err) {
-        alert("Could not load flight data. Check your API or network.");
+        interval = setInterval(updateFlight, 15000);
+      } catch (err) {
+        alert("Could not load local flight data.");
         console.error(err);
-        }
+      }
     }
-</script>
+  </script>
 </body>
 </html>
