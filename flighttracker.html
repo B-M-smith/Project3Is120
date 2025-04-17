@@ -26,9 +26,14 @@
   <main class="container">
     <h2 class="random-flight-title">Random Flight Generator</h2>
     <button id="trackRandomFlight-btn" onclick="trackRandomFlight()">Show Me a Flight</button>
-
-    <div id="map"></div>
-    <div class="info" id="flightInfo"></div>
+  
+    <div class="map-info-container">
+      <!-- Loading Spinner -->
+      <div id="loadingSpinner" class="loading-spinner"></div>
+  
+      <div id="map"></div>
+      <div class="info" id="flightInfo"></div>
+    </div>
   </main>
 
   <!-- Leaflet JS -->
