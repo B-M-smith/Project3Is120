@@ -45,23 +45,43 @@
     let planeMarker;
     let interval;
   
+    // Map city names to their IATA codes
+    const cityToIata = {
+      "Chicago": "ORD",
+      "NewYork": "JFK",
+      "LosAngeles": "LAX",
+      "Miami": "MIA",
+      "Seattle": "SEA",
+      "Dallas": "DFW",
+      "Atlanta": "ATL",
+      "SanFrancisco": "SFO",
+      // Add more mappings as needed
+    };
+  
     async function trackRandomFlight() {
       try {
         const res = await fetch("./API.json");
         const flights = await res.json();
         const popularRoutes = flights.data.popular_routes;
   
+        // Select a random flight route
         const randomFlight = popularRoutes[Math.floor(Math.random() * popularRoutes.length)];
         const routeId = randomFlight.route_id;
   
-        // Extract IATA codes from the route_id
-        const [originCode, destinationCode] = routeId.split("-");
+        // Extract city names from the route_id (format: "OriginCity-DestinationCity")
+        const [originCity, destinationCity] = routeId.split("-");
+  
+        // Convert city names to IATA codes
+        const originCode = cityToIata[originCity];
+        const destinationCode = cityToIata[destinationCity];
   
         console.log("Route ID: ", routeId); // Debugging line
+        console.log("Origin City: ", originCity); // Debugging line
+        console.log("Destination City: ", destinationCity); // Debugging line
         console.log("Origin Code: ", originCode); // Debugging line
         console.log("Destination Code: ", destinationCode); // Debugging line
   
-        // Find matching airports from the airports array
+        // Find corresponding airports for both origin and destination
         const originAirport = flights.data.airports.find(
           (airport) => airport.iata_code === originCode
         );
@@ -69,32 +89,56 @@
           (airport) => airport.iata_code === destinationCode
         );
   
-        // Debugging lines to check the found airports
-        console.log("Origin Airport: ", originAirport); // Debugging line
-        console.log("Destination Airport: ", destinationAirport); // Debugging line
+        // Log airport data for debugging
+        console.log("Origin Airport: ", originAirport);
+        console.log("Destination Airport: ", destinationAirport);
   
+        // Check if both airports are found
         if (!originAirport || !destinationAirport) {
           alert("Could not find coordinates for one or both airports.");
           return;
         }
   
+        // Get coordinates from the found airports
         const coords = {
           origin: [originAirport.location.latitude, originAirport.location.longitude],
-          destination: [destinationAirport.location.latitude, destinationAirport.location.longitude]
+          destination: [destinationAirport.location.latitude, destinationAirport.location.longitude],
         };
+  
+        console.log("Origin Coordinates: ", coords.origin); // Debugging line
+        console.log("Destination Coordinates: ", coords.destination); // Debugging line
   
         if (interval) clearInterval(interval);
   
         const updateFlight = () => {
+          // Remove previous plane marker if it exists
           if (planeMarker) {
             map.removeLayer(planeMarker);
           }
   
+          // Add markers for the origin and destination airports
+          const originMarker = L.marker(coords.origin).addTo(map)
+            .bindPopup(`<b>Origin:</b> ${originCity}<br><b>Airport:</b> ${originAirport.name}`);
+          const destinationMarker = L.marker(coords.destination).addTo(map)
+            .bindPopup(`<b>Destination:</b> ${destinationCity}<br><b>Airport:</b> ${destinationAirport.name}`);
+  
+          // Draw a line between the origin and destination airports
+          const flightPath = L.polyline([coords.origin, coords.destination], {
+            color: "blue",
+            weight: 4,
+          }).addTo(map);
+  
+          // Set the map view to fit the bounds of the flight path
+          map.fitBounds(flightPath.getBounds());
+  
+          // Calculate the midpoint for the plane marker
           const midLat = (coords.origin[0] + coords.destination[0]) / 2;
           const midLng = (coords.origin[1] + coords.destination[1]) / 2;
-          planeMarker = L.marker([midLat, midLng]).addTo(map);
-          map.setView([midLat, midLng], 5);
   
+          // Add the plane marker at the midpoint
+          planeMarker = L.marker([midLat, midLng]).addTo(map);
+  
+          // Update the flight information on the page
           document.getElementById("flightInfo").innerHTML = `
             <strong>Route:</strong> ${randomFlight.origin_city} → ${randomFlight.destination_city}<br>
             <strong>Distance:</strong> ${randomFlight.distance_miles} miles<br>
@@ -118,6 +162,7 @@
       }
     }
   </script>
+  
   
 </body>
 </html>
