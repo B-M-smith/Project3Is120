@@ -2,17 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="home" href="./index.html" />
-  <link rel="stylesheet" href="./styles.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-    rel="stylesheet"
-  />
   <title>Flight Tracker</title>
+
+  <!-- Styles & Fonts -->
+  <link rel="stylesheet" href="./styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -25,14 +20,13 @@
         <a class="Pages" href="./flighttracker.html">Flight Tracker</a>
       </div>
       <h1 class="nav-title">Flight Tracker</h1>
-      <div class="nav-right"></div>
     </nav>
   </header>
 
   <main class="container">
     <h2 class="random-flight-title">Random Flight Generator</h2>
     <button id="trackRandomFlight-btn" onclick="trackRandomFlight()">Show Me a Flight</button>
-  
+
     <div id="map"></div>
     <div class="info" id="flightInfo"></div>
   </main>
@@ -40,57 +34,82 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <!-- Flight Tracker Script -->
+  <!-- Inline Map & Flight Script -->
   <script>
+    // Initialize map
     let map = L.map("map").setView([39.8283, -98.5795], 4);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 18,
     }).addTo(map);
-
+  
     let planeMarker;
     let interval;
-
+  
     async function trackRandomFlight() {
       try {
         const res = await fetch("./API.json");
         const flights = await res.json();
-
-        const randomFlight = flights[Math.floor(Math.random() * flights.length)];
-        const flightId = randomFlight.id;
-
+        const popularRoutes = flights.data.popular_routes;
+  
+        const randomFlight = popularRoutes[Math.floor(Math.random() * popularRoutes.length)];
+        const routeId = randomFlight.route_id;
+  
+        // Extract IATA codes from the route_id
+        const [originCode, destinationCode] = routeId.split("-");
+  
+        console.log("Route ID: ", routeId); // Debugging line
+        console.log("Origin Code: ", originCode); // Debugging line
+        console.log("Destination Code: ", destinationCode); // Debugging line
+  
+        // Find matching airports from the airports array
+        const originAirport = flights.data.airports.find(
+          (airport) => airport.iata_code === originCode
+        );
+        const destinationAirport = flights.data.airports.find(
+          (airport) => airport.iata_code === destinationCode
+        );
+  
+        // Debugging lines to check the found airports
+        console.log("Origin Airport: ", originAirport); // Debugging line
+        console.log("Destination Airport: ", destinationAirport); // Debugging line
+  
+        if (!originAirport || !destinationAirport) {
+          alert("Could not find coordinates for one or both airports.");
+          return;
+        }
+  
+        const coords = {
+          origin: [originAirport.location.latitude, originAirport.location.longitude],
+          destination: [destinationAirport.location.latitude, destinationAirport.location.longitude]
+        };
+  
         if (interval) clearInterval(interval);
-
-        const updateFlight = async () => {
-          const localFlight = flights.find(f => f.id === flightId);
-          if (!localFlight) {
-            alert("Flight data not found in local file.");
-            return;
-          }
-
-          const lat = localFlight.latitude;
-          const lon = localFlight.longitude;
-
-          if (!lat || !lon) {
-            alert("No valid location data for this flight.");
-            return;
-          }
-
+  
+        const updateFlight = () => {
           if (planeMarker) {
             map.removeLayer(planeMarker);
           }
-
-          planeMarker = L.marker([lat, lon]).addTo(map);
-          map.setView([lat, lon], 6);
-
+  
+          const midLat = (coords.origin[0] + coords.destination[0]) / 2;
+          const midLng = (coords.origin[1] + coords.destination[1]) / 2;
+          planeMarker = L.marker([midLat, midLng]).addTo(map);
+          map.setView([midLat, midLng], 5);
+  
           document.getElementById("flightInfo").innerHTML = `
-            <strong>${localFlight.flightNumber}</strong><br>
-            From: ${localFlight.origin} → To: ${localFlight.destination}<br>
-            Altitude: ${localFlight.altitude} ft<br>
-            Speed: ${localFlight.speed} knots<br>
-            ETA: ${localFlight.estimatedArrival}
+            <strong>Route:</strong> ${randomFlight.origin_city} → ${randomFlight.destination_city}<br>
+            <strong>Distance:</strong> ${randomFlight.distance_miles} miles<br>
+            <strong>Airlines:</strong> ${randomFlight.airlines_serving.join(", ")}<br>
+            <strong>Flights per day:</strong> ${randomFlight.flights_per_day}<br>
+            <strong>Best time to book:</strong> ${randomFlight.best_time_to_book_days} days before<br><br>
+            <strong>Average Prices:</strong><br>
+            Economy: $${randomFlight.average_price.economy}<br>
+            Premium Economy: $${randomFlight.average_price.premium_economy}<br>
+            Business: $${randomFlight.average_price.business}<br>
+            First: $${randomFlight.average_price.first}<br>
+            <strong>Average Duration:</strong> ${randomFlight.average_duration_minutes} minutes
           `;
         };
-
+  
         updateFlight();
         interval = setInterval(updateFlight, 15000);
       } catch (err) {
@@ -99,5 +118,6 @@
       }
     }
   </script>
+  
 </body>
 </html>

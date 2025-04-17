@@ -1,66 +1,65 @@
-// setup
+// Initialize map
+let map = L.map("map").setView([39.8283, -98.5795], 4);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 18,
+}).addTo(map);
 
+let planeMarker;
+let routeLine;
 
-fetch("https://flights.is120.ckearl.com/flights")
-  .then(res => res.json())
-  .then(data => console.log(" API connected:", data));
+async function trackRandomFlight() {
+  try {
+    const res = await fetch("https://flights.is120.ckearl.com");
+    const data = await res.json();
+    const randomRoute = data.popular_routes[Math.floor(Math.random() * data.popular_routes.length)];
 
-  // fetch("./API.json")
-  // .then(res => res.json())
-  // .then(data => console.log("Local API loaded:", data))
-  // .catch(err => console.error("Failed to load local API:", err));
-// Flight Tracker page 
+    const { route_id, origin_city, destination_city, distance_miles, airlines_serving, flights_per_day, average_price, average_duration_minutes, best_time_to_book_days } = randomRoute;
 
+    // Get airport location data
+    const originAirport = data.airports.find(airport =>
+      airport.iata_code === route_id.split("-")[0]
+    );
+    const destinationAirport = data.airports.find(airport =>
+      airport.iata_code === route_id.split("-")[1]
+    );
 
+    if (!originAirport || !destinationAirport) {
+      console.error("Missing airport data.");
+      return;
+    }
 
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+    const originCoords = [originAirport.location.latitude, originAirport.location.longitude];
+    const destinationCoords = [destinationAirport.location.latitude, destinationAirport.location.longitude];
 
-const planeIcon = L.icon({
-  iconUrl: "/plane-icon.png", // Replace with your own icon if needed
-  iconSize: [40, 40],
-});
+    if (planeMarker) map.removeLayer(planeMarker);
+    if (routeLine) map.removeLayer(routeLine);
 
-const FlightTracker = ({ flightId }) => {
-  const [position, setPosition] = useState(null);
-  const [flightInfo, setFlightInfo] = useState(null);
+    // Draw the route
+    routeLine = L.polyline([originCoords, destinationCoords], { color: "blue" }).addTo(map);
+    map.fitBounds(routeLine.getBounds());
 
-  useEffect(() => {
-    const fetchFlightData = async () => {
-      try {
-        const res = await fetch(`./${flightId}`);
-        const data = await res.json();
-        setPosition([data.latitude, data.longitude]);
-        setFlightInfo(data);
-      } catch (err) {
-        console.error("Error fetching flight data:", err);
-      }
-    };
+    // Add plane marker to origin
+    planeMarker = L.marker(originCoords).addTo(map);
 
-    fetchFlightData();
-    const interval = setInterval(fetchFlightData, 15000); // update every 15s
-    return () => clearInterval(interval);
-  }, [flightId]);
+    // Display flight info
+    document.getElementById("flightInfo").innerHTML = `
+      <h3>${origin_city} → ${destination_city}</h3>
+      <strong>Route ID:</strong> ${route_id}<br>
+      <strong>Distance:</strong> ${distance_miles} miles<br>
+      <strong>Airlines:</strong> ${airlines_serving.join(", ")}<br>
+      <strong>Flights/Day:</strong> ${flights_per_day}<br>
+      <strong>Book ${best_time_to_book_days} days ahead</strong><br><br>
+      <strong>Prices:</strong><br>
+      Economy: $${average_price.economy}<br>
+      Premium: $${average_price.premium_economy}<br>
+      Business: $${average_price.business}<br>
+      First: $${average_price.first}<br>
+      <strong>Duration:</strong> ${average_duration_minutes} min
+    `;
+  } catch (err) {
+    console.error("Error loading flight data:", err);
+    alert("Failed to load flight data. Please try again later.");
+  }
+}
 
-  return (
-    <div>
-      <MapContainer center={[39.8283, -98.5795]} zoom={4} style={{ height: "500px", width: "100%" }}>
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {position && <Marker position={position} icon={planeIcon} />}
-      </MapContainer>
-
-      {flightInfo && (
-        <div className="info-panel">
-          <h2>{flightInfo.flightNumber}</h2>
-          <p>From: {flightInfo.origin} → To: {flightInfo.destination}</p>
-          <p>Altitude: {flightInfo.altitude} ft</p>
-          <p>Speed: {flightInfo.speed} knots</p>
-          <p>ETA: {flightInfo.estimatedArrival}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
+document.getElementById("trackRandomFlight-btn").addEventListener("click", trackRandomFlight);
