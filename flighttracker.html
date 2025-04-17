@@ -51,7 +51,6 @@
         const flights = await res.json();
         const popularRoutes = flights.data.popular_routes;
 
-        // 🔥 Dynamically build city → IATA map
         const cityToIata = {};
         flights.data.airports.forEach(airport => {
           const city = airport.city.replace(/\s/g, "").toLowerCase();
@@ -135,6 +134,7 @@
         alert("Could not load local flight data.");
         console.error(err);
       }
+      
     }
   </script>
 </body>

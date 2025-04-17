@@ -1,34 +1,34 @@
 let originMarker, destinationMarker, flightPath;
 
 const updateFlight = () => {
-  // 🧹 Clear previous markers and line
+  // lear previous markers and line
   if (planeMarker) map.removeLayer(planeMarker);
   if (originMarker) map.removeLayer(originMarker);
   if (destinationMarker) map.removeLayer(destinationMarker);
-  if (flightPath) map.removeLayer(flightPath);
+  if (flightPath) map.removeLayer(flightPath);  // Ensure flight path is removed
 
-  // ✨ Clear previous flight info
+  // Clear previous flight info
   document.getElementById("flightInfo").innerHTML = "";
 
-  // 🛫 Add new markers
+  // Add new markers
   originMarker = L.marker(coords.origin).addTo(map)
     .bindPopup(`<b>Origin:</b> ${originCityRaw}<br><b>Airport:</b> ${originAirport.name}`);
   destinationMarker = L.marker(coords.destination).addTo(map)
     .bindPopup(`<b>Destination:</b> ${destinationCityRaw}<br><b>Airport:</b> ${destinationAirport.name}`);
 
-  // 🗺️ Draw line between them
+  //  Draw new flight path and ensure it is properly added to the map
   flightPath = L.polyline([coords.origin, coords.destination], {
     color: "blue",
     weight: 4,
   }).addTo(map);
   map.fitBounds(flightPath.getBounds());
 
-  // ✈️ Place plane marker in the middle
+  // Place plane marker in the middle
   const midLat = (coords.origin[0] + coords.destination[0]) / 2;
   const midLng = (coords.origin[1] + coords.destination[1]) / 2;
   planeMarker = L.marker([midLat, midLng]).addTo(map);
 
-  // 📋 Update flight info panel
+  // Update flight info panel and clear any previous content
   document.getElementById("flightInfo").innerHTML = `
     <strong>Route:</strong> ${randomFlight.origin_city} → ${randomFlight.destination_city}<br>
     <strong>Distance:</strong> ${randomFlight.distance_miles} miles<br>
